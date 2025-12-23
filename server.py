@@ -9,7 +9,7 @@ clients = {}               # websocket -> {"email":..., "room":...}
 
 async def broadcast_all(data):
     """Invia un messaggio a tutti i client."""
-    for ws in clients:
+    for ws in list(clients.keys()):
         try:
             await ws.send(json.dumps(data))
         except:
@@ -17,7 +17,7 @@ async def broadcast_all(data):
 
 async def broadcast_room(room, data):
     """Invia un messaggio a tutti nella stanza."""
-    for ws, info in clients.items():
+    for ws, info in list(clients.items()):
         if info["room"] == room:
             try:
                 await ws.send(json.dumps(data))
@@ -89,7 +89,12 @@ async def handle_message(ws, data):
 
         await broadcast_room(room, msg)
 
-async def handler(ws):
+async def handler(ws, path):
+    # Accetta solo WebSocket sul percorso /ws
+    if path != "/ws":
+        await ws.close()
+        return
+
     clients[ws] = {"email": None, "room": "Generale"}
 
     await update_everyone()
@@ -103,13 +108,14 @@ async def handler(ws):
         pass
 
     finally:
-        del clients[ws]
+        if ws in clients:
+            del clients[ws]
         await update_everyone()
 
 async def main():
     port = int(os.environ.get("PORT", 8765))
     async with websockets.serve(handler, "0.0.0.0", port):
-        print(f"Server WebSocket avviato sulla porta {port}")
+        print(f"Server WebSocket avviato sulla porta {port} (path /ws)")
         await asyncio.Future()
 
 asyncio.run(main())
