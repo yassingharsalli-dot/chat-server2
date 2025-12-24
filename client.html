@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<body>
+<input id="msg" placeholder="Scrivi un messaggio">
+<button onclick="send()">Invia</button>
+
+<script>
+const ws = new WebSocket("wss://NOME-PROGETTO.up.railway.app/ws");
+
+ws.onopen = () => console.log("Connesso!");
+ws.onmessage = (event) => console.log("Ricevuto:", event.data);
+
+function send() {
+  const text = document.getElementById("msg").value;
+  ws.send(text);
+}
+</script>
+</body>
+</html>
